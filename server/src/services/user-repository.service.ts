@@ -1,6 +1,6 @@
-import { IsDateString, IsOptional, IsString, IsUUID, MinLength, ValidateNested } from 'class-validator';
-import { Injectable } from 'injection-js';
-import { clone, find, map, reject } from 'lodash';
+import {IsArray, IsDateString, IsOptional, IsString, IsUUID, MinLength, ValidateNested} from 'class-validator';
+import {Injectable} from 'injection-js';
+import {clone, find, map, reject} from 'lodash';
 import * as uuid from 'uuid/v4';
 
 
@@ -75,6 +75,14 @@ export class DeleteQualification {
     id: string = '';
 }
 
+export class CreateMergedUser extends UpdateName {
+    @IsArray({each: true})
+    qualifications: CreatedMergedQualification[] = [];
+}
+
+export class CreatedMergedQualification extends CreateUserQualification {
+    @IsUUID() id: string = '';
+}
 
 @Injectable()
 export class UserRepository {
@@ -109,6 +117,16 @@ export class UserRepository {
         return user;
     }
 
+    public createMergedUser(command: CreateMergedUser) {
+        const user: User = {
+            id: command.id,
+            firstName: command.firstName,
+            lastName: command.lastName,
+            qualifications: command.qualifications,
+        };
+        this.users = [...this.users, user];
+    }
+
     public delete(command: DeleteUser) {
         this.users = reject(this.users, {id: command.id});
     }
@@ -120,8 +138,7 @@ export class UserRepository {
                 newUser.firstName = command.firstName;
                 newUser.lastName = command.lastName;
                 return newUser;
-            }
-            else {
+            } else {
                 return user;
             }
         });
@@ -142,8 +159,7 @@ export class UserRepository {
                     ...user,
                     qualifications: [...user.qualifications, qualification],
                 };
-            }
-            else {
+            } else {
                 return user;
             }
         });
